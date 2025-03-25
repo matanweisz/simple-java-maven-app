@@ -78,4 +78,25 @@ jobs:
     # Push Docker image with latest tag
     - name: Push Docker Image
       run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
+  
+  deploy:
+    needs: docker  # Run only after Docker image is built & pushed
+    runs-on: ubuntu-latest
 
+    steps:
+    - name: Deploy to AWS EC2
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          echo "Pulling latest Docker image..."
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
+
+          echo "Stopping and removing old container..."
+          docker stop java-app || true
+          docker rm java-app || true
+
+          echo "Running new container..."
+          docker run -d --name java-app -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
