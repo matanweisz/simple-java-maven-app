@@ -24,7 +24,7 @@ jobs:
     - name: Test with Maven
       run: mvn test
   
-  docker:
+  build:
     needs: test  # This job runs after 'test'
     runs-on: ubuntu-latest
     
@@ -79,7 +79,7 @@ jobs:
       run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
   
   deploy:
-    needs: docker  # Run only after Docker image is built & pushed
+    needs: build  # Run only after Docker image is built & pushed
     runs-on: ubuntu-latest
 
     steps:
@@ -98,15 +98,14 @@ jobs:
               sudo apt install -y docker.io
               sudo systemctl enable docker
               sudo systemctl start docker
-              sudo usermod -aG docker $USER
           fi
 
           echo "Pulling latest Docker image..."
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
+          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
 
           echo "Stopping and removing old container..."
-          docker stop java-app || true
-          docker rm java-app || true
+          sudo docker stop java-app || true
+          sudo docker rm java-app || true
 
           echo "Running new container..."
-          docker run -d --name java-app ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
+          sudo docker run -d --name java-app ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
