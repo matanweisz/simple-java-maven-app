@@ -83,10 +83,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Login to DockerHub
-    - name: Log in to DockerHub
-      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
     # Deploying the latest image on the EC2
     - name: Deploy to AWS EC2
       uses: appleboy/ssh-action@v0.1.10
@@ -104,6 +100,9 @@ jobs:
               sudo systemctl enable docker
               sudo systemctl start docker
           fi
+
+          echo "Logging in to DockerHub..."
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
           echo "Pulling latest Docker image..."
           sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
