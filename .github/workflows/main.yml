@@ -58,7 +58,7 @@ jobs:
         git tag "v${{ env.NEW_VERSION }}"
         git push origin master --tags
 
-    # Log in to DockerHub
+    # Login to DockerHub
     - name: Log in to DockerHub
       run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
@@ -83,6 +83,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Login to DockerHub
+    - name: Log in to DockerHub
+      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+    # Deploying the latest image on the EC2
     - name: Deploy to AWS EC2
       uses: appleboy/ssh-action@v0.1.10
       with:
