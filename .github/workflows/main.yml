@@ -30,8 +30,7 @@ jobs:
     
     steps:
     # Checkout
-    - uses: actions/checkout@v4
-   
+    - uses: actions/checkout@v4   
 
     # Get current version
     - name: Get current version
@@ -91,6 +90,17 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          echo "Checking if Docker is installed..."
+          if ! command -v docker &> /dev/null
+          then
+              echo "Docker not found. Installing Docker..."
+              sudo apt update -y
+              sudo apt install -y docker.io
+              sudo systemctl enable docker
+              sudo systemctl start docker
+              sudo usermod -aG docker $USER
+          fi
+
           echo "Pulling latest Docker image..."
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
 
@@ -99,4 +109,4 @@ jobs:
           docker rm java-app || true
 
           echo "Running new container..."
-          docker run -d --name java-app -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
+          docker run -d --name java-app ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
