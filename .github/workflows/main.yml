@@ -5,7 +5,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     
     steps:
@@ -23,14 +23,50 @@ jobs:
     # Test
     - name: Test with Maven
       run: mvn test
+  
+  docker:
+    needs: test  # This job runs after 'test'
+    runs-on: ubuntu-latest
     
-    # Build
-    - name: Build with Maven
-      run: mvn -B -DskipTests clean package --file pom.xml
+    steps:
+    # Checkout
+    - uses: actions/checkout@v4
+   
 
-    # Run
-    - name: Run App
-      run: java jar App.jar
-    
+    # Get current version
+    - name: Get current version
+      id: get_version
+      run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
 
+    # Increment patch version (major.minor.patch)
+    - name: Increment patch version
+      id: bump_version
+      run: |
+        VERSION=${{ env.VERSION }}
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+        PATCH=$((PATCH + 1))
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        echo $NEW_VERSION > VERSION
 
+    # Commit and push updated VERSION file
+    - name: Commit and push new version
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git add VERSION
+        git commit -m "Bump version to ${{ env.NEW_VERSION }}"
+        git tag "v${{ env.NEW_VERSION }}"
+        git push origin master --tags
+
+    # Log in to DockerHub
+    - name: Log in to DockerHub
+      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+    # Build Docker image with version tag
+    - name: Build Docker Image
+      run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:${{ env.NEW_VERSION }} .
+
+    # Push Docker image with version tag
+    - name: Push Docker Image
+      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:${{ env.NEW_VERSION }} 
