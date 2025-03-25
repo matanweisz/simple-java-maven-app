@@ -69,4 +69,13 @@ jobs:
 
     # Push Docker image with version tag
     - name: Push Docker Image
-      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:${{ env.NEW_VERSION }} 
+      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:${{ env.NEW_VERSION }}
+
+    # Tag the Docker image with latest tag
+    - name: Build Docker Image
+      run: docker tag ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:${{ env.NEW_VERSION }} ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
+
+    # Push Docker image with latest tag
+    - name: Push Docker Image
+      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/simple-java-maven-app:latest
+
